@@ -1,54 +1,116 @@
-import { Platform } from 'react-native';
-import { check, request, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import { Platform, PermissionsAndroid } from 'react-native';
 
-class PermissionService {
-  async requestStoragePermission() {
-    const permissions = Platform.OS === 'ios'
-      ? [PERMISSIONS.IOS.PHOTO_LIBRARY]
-      : [
-          PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
-          PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE,
+// How to use in other files:
+// import PermissionService from '../services/PermissionService';
+// 
+// async function someFunction() {
+//   const hasStoragePermission = await PermissionService.requestStoragePermission();
+//   // or get all permissions
+//   const allPermissions = await PermissionService.requestAllPermissions();
+// }
+
+const requestStoragePermission = async () => {
+  try {
+    console.log("Asking for storage");
+    let permissions = [];
+    let results = [];
+
+    if (Platform.OS === 'android') {
+      console.log("Platform is android");
+      if (Platform.Version >= 33) {
+        console.log("Version is 14")
+        // Android 13+ requires these separate permissions
+        permissions = [
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_VIDEO,
+          PermissionsAndroid.PERMISSIONS.READ_MEDIA_AUDIO,
         ];
+      } else {
+        permissions = [
+          PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        ];
+      }
 
-    const results = await Promise.all(
-      permissions.map(permission => request(permission))
+      for (const permission of permissions) {
+        const result = await PermissionsAndroid.request(permission);
+        results.push(result);
+      }
+      
+      console.log("Results are ", results);
+      return results.every(result => result === PermissionsAndroid.RESULTS.GRANTED);
+    } else {
+      // iOS or other platform
+      return true;
+    }
+  } catch (err) {
+    console.error(err);
+    return false;
+  }
+};
+
+const requestCameraPermission = async () => {
+  console.log("I am requesting for camera")
+  try {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Cool Photo App Camera Permission',
+        message:
+          'Cool Photo App needs access to your camera ' +
+          'so you can take awesome pictures.',
+        buttonNeutral: 'Ask Me Later',
+        buttonNegative: 'Cancel',
+        buttonPositive: 'OK',
+      },
     );
-    return results.every(result => result === RESULTS.GRANTED);
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('You can use the camera');
+      return true;
+    } else {
+      console.log('Camera permission denied');
+      return false;
+    }
+  } catch (err) {
+    console.warn(err);
   }
+};
 
-  async requestCameraPermission() {
-    const permission = Platform.OS === 'ios'
-      ? PERMISSIONS.IOS.CAMERA
-      : PERMISSIONS.ANDROID.CAMERA;
-    const result = await request(permission);
-    return result === RESULTS.GRANTED;
+
+const requestLocationPermission = async () => {
+  try {
+    const permission = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
+    const result = await PermissionsAndroid.request(permission);
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    return false;
   }
+};
 
-  async requestLocationPermission() {
-    const permission = Platform.OS === 'ios'
-      ? PERMISSIONS.IOS.LOCATION_WHEN_IN_USE
-      : PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION;
-    const result = await request(permission);
-    return result === RESULTS.GRANTED;
+const requestAudioPermission = async () => {
+  try {
+    const permission = PermissionsAndroid.PERMISSIONS.RECORD_AUDIO;
+    const result = await PermissionsAndroid.request(permission);
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (err) {
+    return false;
   }
+};
 
-  async requestAudioPermission() {
-    const permission = Platform.OS === 'ios'
-      ? PERMISSIONS.IOS.MICROPHONE
-      : PERMISSIONS.ANDROID.RECORD_AUDIO;
-    const result = await request(permission);
-    return result === RESULTS.GRANTED;
-  }
+const requestAllPermissions = async () => {
+  const results = {
+    storage: await requestStoragePermission(),
+    camera: await requestCameraPermission(),
+    location: await requestLocationPermission(),
+    audio: await requestAudioPermission(),
+  };
+  return results;
+};
 
-  async requestAllPermissions() {
-    const results = {
-      storage: await this.requestStoragePermission(),
-      camera: await this.requestCameraPermission(),
-      location: await this.requestLocationPermission(),
-      audio: await this.requestAudioPermission(),
-    };
-    return results;
-  }
-}
-
-export default new PermissionService();
+export default {
+  requestStoragePermission,
+  requestCameraPermission,
+  requestLocationPermission,
+  requestAudioPermission,
+  requestAllPermissions,
+};
