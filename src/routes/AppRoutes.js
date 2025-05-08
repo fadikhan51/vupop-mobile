@@ -34,7 +34,7 @@ const AppRoutes = () => {
       />
       <Stack.Screen
         name="SignIn"
-        component={OrientationSelectionScreen}
+        component={SignInScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
