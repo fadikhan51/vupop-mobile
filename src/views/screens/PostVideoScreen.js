@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,14 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  FlatList,
   Image,
+  FlatList,
 } from 'react-native';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import usePostVideoController from '../../controllers/PostVideoController';
 import AppTheme from '../../utils/Theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const PostVideoScreen = ({ route, navigation }) => {
   const {
@@ -33,8 +34,35 @@ const PostVideoScreen = ({ route, navigation }) => {
     cancel,
   } = usePostVideoController(route, navigation);
 
+  const mentionInputRef = useRef(null);
+  const [dropdownTop, setDropdownTop] = useState(0);
+
+  const handleInputLayout = () => {
+    if (mentionInputRef.current) {
+      mentionInputRef.current.measure((x, y, width, height, pageX, pageY) => {
+        setDropdownTop(pageY + height + 4); // Position just below input with small gap
+      });
+    }
+  };
+
+  const renderSuggestionItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.suggestionItem}
+      onPress={() => {
+        addMention(item.id);
+        clearMentionSuggestions();
+      }}
+    >
+      <Image
+        source={require('../../../assets/images/profile1.png')}
+        style={styles.suggestionImage}
+      />
+      <Text style={styles.suggestionText}>{item.id}</Text>
+    </TouchableOpacity>
+  );
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={cancel}>
           <Icon name="close" size={28} color={AppTheme.primaryYellow} />
@@ -83,7 +111,7 @@ const PostVideoScreen = ({ route, navigation }) => {
         />
         {hashtags.length > 0 && (
           <View style={styles.chipContainer}>
-            {hashtags.map(tag => (
+            {hashtags.map((tag) => (
               <View key={tag} style={styles.chip}>
                 <Text style={styles.chipText}>{tag}</Text>
                 <TouchableOpacity onPress={() => removeHashtag(tag)}>
@@ -94,53 +122,39 @@ const PostVideoScreen = ({ route, navigation }) => {
           </View>
         )}
         <Text style={styles.sectionTitle}>Mentions</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Mention someone (e.g., @user1)"
-          placeholderTextColor="gray"
-          onChangeText={(value) => {
-            if (value.endsWith('@') || (value.includes('@') && value.split(' ').pop().startsWith('@'))) {
-              const lastWord = value.split(' ').pop();
-              if (lastWord.startsWith('@')) {
-                updateMentionSuggestions(lastWord);
+        <View style={styles.mentionInputContainer}>
+          <TextInput
+            ref={mentionInputRef}
+            onLayout={handleInputLayout}
+            style={styles.input}
+            placeholder="Mention someone (e.g., @user1)"
+            placeholderTextColor="gray"
+            onChangeText={(value) => {
+              handleInputLayout(); // Recalculate position on text change
+              if (
+                value.endsWith('@') ||
+                (value.includes('@') && value.split(' ').pop().startsWith('@'))
+              ) {
+                const lastWord = value.split(' ').pop();
+                if (lastWord.startsWith('@')) {
+                  updateMentionSuggestions(lastWord);
+                }
+              } else {
+                clearMentionSuggestions();
               }
-            } else {
-              clearMentionSuggestions();
-            }
-          }}
-          onSubmitEditing={(e) => {
-            const value = e.nativeEvent.text;
-            if (value) {
-              addMention(value);
-              e.target.clear();
-            }
-          }}
-        />
-        {mentionSuggestions.length > 0 && (
-          <FlatList
-            data={mentionSuggestions}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.suggestionItem}
-                onPress={() => {
-                  addMention(item.id);
-                  clearMentionSuggestions();
-                }}
-              >
-                <Image
-                  source={require('../../../assets/images/profile1.png')}
-                  style={styles.suggestionImage}
-                />
-                <Text style={styles.suggestionText}>{item.id}</Text>
-              </TouchableOpacity>
-            )}
-            style={styles.suggestionList}
+            }}
+            onSubmitEditing={(e) => {
+              const value = e.nativeEvent.text;
+              if (value) {
+                addMention(value);
+                e.target.clear();
+              }
+            }}
           />
-        )}
+        </View>
         {mentions.length > 0 && (
           <View style={styles.chipContainer}>
-            {mentions.map(mention => (
+            {mentions.map((mention) => (
               <View key={mention} style={styles.chip}>
                 <Text style={styles.chipText}>{mention}</Text>
                 <TouchableOpacity onPress={() => removeMention(mention)}>
@@ -158,7 +172,19 @@ const PostVideoScreen = ({ route, navigation }) => {
           </Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+      {mentionSuggestions.length > 0 && (
+        <View style={[styles.suggestionListContainer, { top: dropdownTop }]}>
+          <FlatList
+            data={mentionSuggestions}
+            renderItem={renderSuggestionItem}
+            keyExtractor={(item) => item.id}
+            style={styles.suggestionList}
+            contentContainerStyle={styles.suggestionListContent}
+            showsVerticalScrollIndicator={false}
+          />
+        </View>
+      )}
+    </SafeAreaView>
   );
 };
 
@@ -254,26 +280,45 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: 'Poppins',
   },
-  suggestionList: {
+  mentionInputContainer: {
+    position: 'relative',
+  },
+  suggestionListContainer: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
     maxHeight: 200,
     backgroundColor: AppTheme.secondaryBlack,
-    borderRadius: 8,
-    marginTop: 4,
+    borderRadius: 12, // Softer corners for minimalistic look
+    zIndex: 1000,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2, // Subtle shadow for minimalism
+    shadowRadius: 4,
+  },
+  suggestionList: {
+    flexGrow: 0,
+  },
+  suggestionListContent: {
+    paddingVertical: 8,
   },
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    padding: 10, // Slightly larger padding for cleaner look
+    paddingHorizontal: 12,
   },
   suggestionImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36, // Slightly smaller for minimalism
+    height: 36,
+    borderRadius: 18,
   },
   suggestionText: {
     color: 'white',
-    marginLeft: 8,
+    marginLeft: 10,
     fontFamily: 'Poppins',
+    fontSize: 14,
   },
   locationContainer: {
     flexDirection: 'row',

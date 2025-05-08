@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import Geolocation from '@react-native-community/geolocation';
+import Geolocation from 'react-native-geolocation-service';
 import useAuthController from './AuthController';
+import { PermissionsAndroid } from 'react-native';
 
 const usePostVideoController = (route, navigation) => {
   const [videoPath, setVideoPath] = useState(route.params?.videoPath || '');
@@ -28,18 +29,69 @@ const usePostVideoController = (route, navigation) => {
     setIsVideoPortrait(true);
   }, []);
 
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      (position) => {
-        // RN doesn't have a direct equivalent to placemarkFromCoordinates; use a third-party API or hardcode for now
-        setLocation('Sample City, Sample Country');
-      },
-      (error) => {
-        alert(`Failed to get location: ${error.message}`);
-      },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
+  const getCurrentLocation = async () => {
+    try {
+      // Request location permission (Android)
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          alert('Location permission denied');
+          return;
+        }
+      }
+  
+      // Get current coordinates
+      Geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log('Coords:', latitude, longitude);
+  
+          // Now reverse geocode
+          const locationName = await reverseGeocode(latitude, longitude);
+          setLocation(locationName);
+        },
+        (error) => {
+          console.log('Location error:', error);
+          alert(`Failed to get location: ${error.message}`);
+        },
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: 10000 }
+      );
+  
+    } catch (err) {
+      console.warn(err);
+    }
   };
+
+  const reverseGeocode = async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+       { headers: {
+        'User-Agent': 'MyReactNativeApp/1.0 (contact@myapp.com)', 
+          'Accept': 'application/jsonv2'  
+        }  }  
+      );
+
+      console.log(latitude);
+      console.log(longitude);
+  
+      
+      const data = await response.json();
+      console.log('Geocode response:', data); 
+  
+      const city = data.address.city || data.address.town || data.address.village || '';
+      const country = data.address.country || '';
+  
+      return `${city}, ${country}`;
+    } catch (error) {
+      console.log('Reverse geocode error:', error);
+      return 'Unknown Location';
+    }
+  };
+  
+  
 
   const addHashtag = (tag) => {
     if (tag.startsWith('#') && !hashtags.includes(tag)) {

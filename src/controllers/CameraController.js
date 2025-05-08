@@ -1,8 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { Camera } from 'react-native-vision-camera';
-import useOrientationController from './OrientationController';
+import { OrientationContext } from '../contexts/orientationContext';
 
 const useCameraController = (navigation) => {
+  const [device, setDevice] = useState(null); // ✅ Track selected device
   const [isInitialized, setIsInitialized] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isAudioEnabled, setIsAudioEnabled] = useState(true);
@@ -10,25 +11,32 @@ const useCameraController = (navigation) => {
   const [currentZoom, setCurrentZoom] = useState(1.0);
   const [isFrontCamera, setIsFrontCamera] = useState(false);
   const cameraRef = useRef(null);
-  const { selectedOrientation } = useOrientationController();
+  const { orientation } = useContext(OrientationContext);
 
   useEffect(() => {
+    console.log("The orientation fetched from orientation controller is ", orientation);
     initializeCamera();
     return () => disposeCamera();
-  }, []);
+  }, [isFrontCamera]); // ✅ re-run when toggling front/back camera
 
   const initializeCamera = async () => {
     try {
       const devices = await Camera.getAvailableCameraDevices();
-      const device = devices.find(d => d.position === (isFrontCamera ? 'front' : 'back'));
-      if (!device) {
+      console.log('Available devices:', devices); // ✅ Debugging log
+
+      const selectedDevice = devices.find(d => d.position === (isFrontCamera ? 'front' : 'back'));
+      if (!selectedDevice) {
         alert('No camera found');
+        setDevice(null);
+        setIsInitialized(false);
         return;
       }
 
+      setDevice(selectedDevice);
       setIsInitialized(true);
     } catch (e) {
       alert(`Failed to initialize camera: ${e}`);
+      setDevice(null);
       setIsInitialized(false);
     }
   };
@@ -39,19 +47,17 @@ const useCameraController = (navigation) => {
     }
   };
 
-  const toggleCamera = async () => {
-    setIsFrontCamera(!isFrontCamera);
-    await initializeCamera();
+  const toggleCamera = () => {
+    setIsFrontCamera(prev => !prev);
   };
 
   const toggleRecording = async () => {
     if (!isInitialized) return;
-
+  
     try {
       if (isRecording) {
-        const video = await cameraRef.current.stopRecording();
+        await cameraRef.current.stopRecording();
         setIsRecording(false);
-        navigation.navigate('PostVideo', { videoPath: video.path });
       } else {
         await cameraRef.current.startRecording({
           onRecordingFinished: (video) => {
@@ -71,12 +77,12 @@ const useCameraController = (navigation) => {
     }
   };
 
-  const toggleAudio = async () => {
-    setIsAudioEnabled(!isAudioEnabled);
+  const toggleAudio = () => {
+    setIsAudioEnabled(prev => !prev);
   };
 
-  const toggleFlash = async () => {
-    setIsFlashEnabled(!isFlashEnabled);
+  const toggleFlash = () => {
+    setIsFlashEnabled(prev => !prev);
   };
 
   const setZoom = (zoom) => {
@@ -84,6 +90,7 @@ const useCameraController = (navigation) => {
   };
 
   return {
+    device, // ✅ return the selected device
     isInitialized,
     isRecording,
     isAudioEnabled,
@@ -91,7 +98,7 @@ const useCameraController = (navigation) => {
     currentZoom,
     isFrontCamera,
     cameraRef,
-    selectedOrientation,
+    orientation,
     toggleCamera,
     toggleRecording,
     toggleAudio,

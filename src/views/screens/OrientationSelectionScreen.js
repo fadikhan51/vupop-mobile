@@ -1,20 +1,23 @@
-import React from 'react';
+import React, {useContext} from 'react';
+import { OrientationContext } from '../../contexts/orientationContext';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import useOrientationController from '../../controllers/OrientationController';
 import AppTheme from '../../utils/Theme';
 import { AppRoutes } from '../../utils/Constants';
 
 const OrientationSelectionScreen = ({ navigation }) => {
-  const { selectedOrientation, setOrientation } = useOrientationController();
+    const { orientation, changeOrientation } = useContext(OrientationContext);
+
+  
 
   const handleOrientationSelect = (orientation) => {
-    setOrientation(orientation);
+    // console.log("I am setting the orientation to ",orientation)
+    changeOrientation(orientation);
     navigation.navigate(AppRoutes.camera);
   };
 
-  const OrientationCard = ({ orientation, icon, title, subtitle }) => {
-    const isSelected = selectedOrientation === orientation;
+  const OrientationCard = ({ orientation1, icon, title, subtitle }) => {
+    const isSelected = orientation === orientation1;
     return (
       <TouchableOpacity
         style={[
@@ -27,7 +30,7 @@ const OrientationSelectionScreen = ({ navigation }) => {
             shadowOpacity: isSelected ? 0.3 : 0.2,
           },
         ]}
-        onPress={() => handleOrientationSelect(orientation)}
+        onPress={() => handleOrientationSelect(orientation1)}
       >
         <Icon
           name={icon}
@@ -68,13 +71,13 @@ const OrientationSelectionScreen = ({ navigation }) => {
       </View>
       <View style={styles.cardContainer}>
         <OrientationCard
-          orientation="portrait"
+          orientation1="portrait"
           icon="phone-android"
           title="Portrait"
           subtitle="Vertical video (9:16)"
         />
         <OrientationCard
-          orientation="landscape"
+          orientation1="landscape"
           icon="phone-android"
           title="Landscape"
           subtitle="Horizontal video (16:9)"

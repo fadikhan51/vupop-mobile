@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Slider } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { Camera } from 'react-native-vision-camera';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import Icon from '@react-native-vector-icons/ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import useCameraController from '../../controllers/CameraController';
 import AppTheme from '../../utils/Theme';
@@ -15,7 +16,7 @@ const CameraScreen = ({ navigation }) => {
     currentZoom,
     isFrontCamera,
     cameraRef,
-    selectedOrientation,
+    orientation,
     toggleCamera,
     toggleRecording,
     toggleAudio,
@@ -23,8 +24,8 @@ const CameraScreen = ({ navigation }) => {
     setZoom,
   } = useCameraController(navigation);
 
-  const isLandscapeForIcons = selectedOrientation === 'landscape';
-  const isLandscapeForPreview = selectedOrientation === 'landscape';
+  const isLandscapeForIcons = orientation === 'landscape';
+  const isLandscapeForPreview = orientation === 'landscape';
 
   if (!isInitialized) {
     return (
@@ -35,6 +36,8 @@ const CameraScreen = ({ navigation }) => {
   }
 
   return (
+    <>
+    {console.log(orientation)}
     <View style={styles.container}>
       <Camera
         ref={cameraRef}
@@ -45,7 +48,7 @@ const CameraScreen = ({ navigation }) => {
         audio={isAudioEnabled}
         torch={isFlashEnabled ? 'on' : 'off'}
         zoom={currentZoom}
-        orientation={selectedOrientation}
+        orientation={orientation}
       />
       <View style={styles.overlay}>
         <LinearGradient
@@ -54,25 +57,27 @@ const CameraScreen = ({ navigation }) => {
         >
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Icon
-              name="arrow-back"
-              size={30}
+              name="chevron-back-circle"
+              size={32}
               color={AppTheme.primaryYellow}
               style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
             />
           </TouchableOpacity>
           <View style={styles.topBarRight}>
-            <TouchableOpacity onPress={toggleFlash}>
-              <Icon
-                name={isFlashEnabled ? 'flash-on' : 'flash-off'}
-                size={30}
-                color={AppTheme.primaryYellow}
-                style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
-              />
-            </TouchableOpacity>
+            {!isFrontCamera && (
+              <TouchableOpacity onPress={toggleFlash} style={styles.iconSpacing}>
+                <Icon
+                  name={isFlashEnabled ? 'flash' : 'flash-off'}
+                  size={32}
+                  color={AppTheme.primaryYellow}
+                  style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={toggleCamera}>
               <Icon
-                name="flip-camera-ios"
-                size={30}
+                name="camera-reverse"
+                size={32}
                 color={AppTheme.primaryYellow}
                 style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
               />
@@ -80,8 +85,10 @@ const CameraScreen = ({ navigation }) => {
           </View>
         </LinearGradient>
         <View style={styles.rightControls}>
+            <>
+            {console.log("The value for is landscape is ", isLandscapeForIcons)}
           <Slider
-            style={{ width: 200, transform: [{ rotate: isLandscapeForPreview ? '0deg' : '-90deg' }] }}
+            style={{width:200, transform: [{ rotate:'-90deg' }] }}
             minimumValue={1}
             maximumValue={5}
             value={currentZoom}
@@ -90,6 +97,7 @@ const CameraScreen = ({ navigation }) => {
             maximumTrackTintColor={AppTheme.primaryYellow + '4D'}
             thumbTintColor={AppTheme.primaryYellow}
           />
+          </>
         </View>
         <LinearGradient
           colors={[AppTheme.primaryBlack + '00', AppTheme.primaryBlack + 'CC']}
@@ -97,8 +105,8 @@ const CameraScreen = ({ navigation }) => {
         >
           <TouchableOpacity onPress={toggleAudio}>
             <Icon
-              name={isAudioEnabled ? 'volume-up' : 'volume-off'}
-              size={32}
+              name={isAudioEnabled ? 'volume-high' : 'volume-mute'}
+              size={34}
               color={AppTheme.primaryYellow}
               style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
             />
@@ -121,10 +129,11 @@ const CameraScreen = ({ navigation }) => {
               />
             </View>
           </TouchableOpacity>
-          <View style={{ width: 32 }} />
+          <View style={{ width: 34 }} />
         </LinearGradient>
       </View>
     </View>
+    </>
   );
 };
 
@@ -144,10 +153,14 @@ const styles = StyleSheet.create({
   },
   topBarRight: {
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconSpacing: {
+    marginRight: 20,
   },
   rightControls: {
     position: 'absolute',
-    right: 16,
+    right: -70,
     top: 0,
     bottom: 0,
     justifyContent: 'center',

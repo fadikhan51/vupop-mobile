@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ORIENTATION_KEY = 'selectedOrientation';
@@ -18,7 +18,12 @@ const useOrientationController = () => {
     }
   };
 
-  return { selectedOrientation, setOrientation: saveOrientation, loadOrientation };
+  // Load orientation when hook mounts
+  useEffect(() => {
+    loadOrientation();
+  }, []);
+
+  return { selectedOrientation, setOrientation: saveOrientation };
 };
 
 export default useOrientationController;
