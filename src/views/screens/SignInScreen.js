@@ -46,7 +46,6 @@ const SignInScreen = ({ navigation }) => {
     launchTermsAndPrivacyUrl,
   } = useAuthController(navigation);
 
-  // Fix: Custom checkbox component to replace the problematic CheckBox
   const CustomCheckBox = ({ value, onValueChange }) => (
     <TouchableOpacity
       onPress={() => onValueChange(!value)}

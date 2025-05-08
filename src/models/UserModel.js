@@ -6,9 +6,10 @@ class UserModel {
       this.createdAt = data.createdAt || null;
       this.profilePicture = data.profilePicture || '';
       this.bio = data.bio || '';
-      this.followers = data.followers || 0;
-      this.following = data.following || 0;
-      this.posts = data.posts || 0;
+      this.passions = data.passions || [];
+      this.requests = data.requests || [];
+      this.friends = data.friends || [];
+      this.posts = data.posts || [];
     }
   
     static fromJson(data) {

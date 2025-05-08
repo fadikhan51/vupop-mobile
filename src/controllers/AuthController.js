@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   getAuth, 
-  onAuthStateChanged, 
-  fetchSignInMethodsForEmail 
+  onAuthStateChanged 
 } from '@react-native-firebase/auth';
 import { 
   getFirestore, 
@@ -110,10 +109,12 @@ const useAuthController = (navigation) => {
     setIsLoading(true);
     try {
       const app = getApp();
-      const authInstance = getAuth(app);
-      const signInMethods = await fetchSignInMethodsForEmail(authInstance, email.trim());
+      const db = getFirestore(app);
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email.trim().toLowerCase()));
+      const querySnapshot = await getDocs(q);
 
-      if (signInMethods.length > 0) {
+      if (!querySnapshot.empty) {
         setIsUserExist(true);
         setShowOtherFields(false);
       } else {
@@ -167,20 +168,24 @@ const useAuthController = (navigation) => {
         const app = getApp();
         const db = getFirestore(app);
 
-        await setDoc(doc(db, 'users', firebaseUser.uid), {
+        // Create UserModel-compatible Firestore document
+        const userData = {
           uid: firebaseUser.uid,
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           username: username.trim(),
           createdAt: serverTimestamp(),
           profilePicture: '',
           bio: '',
-          followers: 0,
-          following: 0,
-          posts: 0,
-        });
+          passions: [],
+          requests: [],
+          friends: [],
+          posts: [],
+        };
 
-        const userData = await FirebaseService.getUserData(firebaseUser.uid);
-        setUser(userData);
+        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
+
+        const fetchedUserData = await FirebaseService.getUserData(firebaseUser.uid);
+        setUser(fetchedUserData);
         navigation.replace(AppRoutes.home);
       }
     } catch (e) {

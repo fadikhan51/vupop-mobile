@@ -1,10 +1,15 @@
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { getApp } from '@react-native-firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, fetchSignInMethodsForEmail, signOut as firebaseSignOut } from '@react-native-firebase/auth';
+import { getFirestore, doc, getDoc } from '@react-native-firebase/firestore';
 import UserModel from '../models/UserModel';
+
+const app = getApp();
+const authInstance = getAuth(app);
+const firestoreInstance = getFirestore(app);
 
 const signUp = async (email, password, username) => {
   try {
-    const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+    const userCredential = await createUserWithEmailAndPassword(authInstance, email, password);
     return userCredential.user;
   } catch (e) {
     throw e;
@@ -13,7 +18,7 @@ const signUp = async (email, password, username) => {
 
 const signIn = async (email, password) => {
   try {
-    const userCredential = await auth().signInWithEmailAndPassword(email, password);
+    const userCredential = await signInWithEmailAndPassword(authInstance, email, password);
     return userCredential.user;
   } catch (e) {
     throw e;
@@ -21,13 +26,12 @@ const signIn = async (email, password) => {
 };
 
 const signInWithGoogle = async () => {
-  // Google Sign-In is more complex in RN; we'll skip this for now as it requires additional setup
   throw new Error('Google Sign-In not implemented');
 };
 
 const checkUserExists = async (email) => {
   try {
-    const methods = await auth().fetchSignInMethodsForEmail(email);
+    const methods = await fetchSignInMethodsForEmail(authInstance, email);
     return methods.length > 0;
   } catch (e) {
     console.log('Check user exists error:', e);
@@ -37,21 +41,22 @@ const checkUserExists = async (email) => {
 
 const signOut = async () => {
   try {
-    await auth().signOut();
+    await firebaseSignOut(authInstance);
   } catch (e) {
     throw e;
   }
 };
 
 const getCurrentUser = () => {
-  return auth().currentUser;
+  return authInstance.currentUser;
 };
 
 const getUserData = async (uid) => {
   try {
-    const doc = await firestore().collection('users').doc(uid).get();
-    if (doc.exists) {
-      return new UserModel(doc.data());
+    const userDocRef = doc(firestoreInstance, 'users', uid);
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+      return new UserModel(docSnap.data());
     }
     return null;
   } catch (e) {
