@@ -253,8 +253,8 @@ const SignInScreen = ({ navigation }) => {
               styles.actionButton,
               { 
                 backgroundColor: isValidEmail && termAndConditionAccepted 
-                  ? AppTheme.primaryYellow 
-                  : 'rgba(255, 193, 7, 0.5)' 
+                  ?  AppTheme.primaryYellow
+                  : 'rgba(255, 215, 0, 0.5)'
               },
             ]}
             onPress={async () => {
@@ -463,9 +463,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: AppTheme.primaryYellow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+
     shadowRadius: 8,
     elevation: 4,
   },
