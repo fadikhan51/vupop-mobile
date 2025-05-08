@@ -1,6 +1,20 @@
 import { useState, useEffect } from 'react';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { 
+  getAuth, 
+  onAuthStateChanged, 
+  fetchSignInMethodsForEmail 
+} from '@react-native-firebase/auth';
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  serverTimestamp 
+} from '@react-native-firebase/firestore';
+import { getApp } from '@react-native-firebase/app';
 import FirebaseService from '../services/FirebaseService';
 import { AppRoutes } from '../utils/Constants';
 
@@ -36,7 +50,10 @@ const useAuthController = (navigation) => {
   };
 
   useEffect(() => {
-    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+    const app = getApp();
+    const authInstance = getAuth(app);
+
+    const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser) => {
       if (firebaseUser) {
         const userData = await FirebaseService.getUserData(firebaseUser.uid);
         setUser(userData);
@@ -44,6 +61,7 @@ const useAuthController = (navigation) => {
         setUser(null);
       }
     });
+
     return unsubscribe;
   }, []);
 
@@ -74,10 +92,12 @@ const useAuthController = (navigation) => {
   };
 
   const checkUsernameAvailable = async (username) => {
-    const querySnapshot = await firestore()
-      .collection('users')
-      .where('username', '==', username)
-      .get();
+    const app = getApp();
+    const db = getFirestore(app);
+
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', username));
+    const querySnapshot = await getDocs(q);
     return querySnapshot.empty;
   };
 
@@ -89,7 +109,10 @@ const useAuthController = (navigation) => {
 
     setIsLoading(true);
     try {
-      const signInMethods = await auth().fetchSignInMethodsForEmail(email.trim());
+      const app = getApp();
+      const authInstance = getAuth(app);
+      const signInMethods = await fetchSignInMethodsForEmail(authInstance, email.trim());
+
       if (signInMethods.length > 0) {
         setIsUserExist(true);
         setShowOtherFields(false);
@@ -141,11 +164,14 @@ const useAuthController = (navigation) => {
 
       const firebaseUser = await FirebaseService.signUp(email.trim(), password, username.trim());
       if (firebaseUser) {
-        await firestore().collection('users').doc(firebaseUser.uid).set({
+        const app = getApp();
+        const db = getFirestore(app);
+
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
           uid: firebaseUser.uid,
           email: email.trim(),
           username: username.trim(),
-          createdAt: firestore.FieldValue.serverTimestamp(),
+          createdAt: serverTimestamp(),
           profilePicture: '',
           bio: '',
           followers: 0,

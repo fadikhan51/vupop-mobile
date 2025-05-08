@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "683104715744",
+    "project_id": "vupop-mobile",
+    "storage_bucket": "vupop-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683104715744:android:ddb396f45748d1afb12185",
+        "android_client_info": {
+          "package_name": "com.example.vupop"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "683104715744-r4kiou1vbh6ui0vjnlbjd6kihjhe8i4a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpvRq5Hkekz5zRbGBL0gG4bR9QXGt2tGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "683104715744-r4kiou1vbh6ui0vjnlbjd6kihjhe8i4a.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "683104715744-1j9uiqh0qtsn6kk2fpfhir8cc0j0uagp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vupop"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:683104715744:android:47aa952633d3ba7bb12185",
+        "android_client_info": {
+          "package_name": "com.vupopapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "683104715744-r4kiou1vbh6ui0vjnlbjd6kihjhe8i4a.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDpvRq5Hkekz5zRbGBL0gG4bR9QXGt2tGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "683104715744-r4kiou1vbh6ui0vjnlbjd6kihjhe8i4a.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "683104715744-1j9uiqh0qtsn6kk2fpfhir8cc0j0uagp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vupop"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
