@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { 
   getAuth, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from '@react-native-firebase/auth';
 import { 
   getFirestore, 
@@ -129,67 +131,35 @@ const useAuthController = (navigation) => {
   };
 
   const loginUser = async () => {
-    if (!validatePassword(password)) {
-      alert('Please enter a valid password');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      const firebaseUser = await FirebaseService.signIn(email.trim(), password);
-      if (firebaseUser) {
-        const userData = await FirebaseService.getUserData(firebaseUser.uid);
-        setUser(userData);
-        navigation.replace(AppRoutes.home);
-      }
-    } catch (e) {
-      alert(`Login failed: ${e.message}`);
+      setIsLoading(true);
+      const auth = getAuth();
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      navigation.replace(AppRoutes.mainTabs);
+    } catch (error) {
+      alert(error.message);
     } finally {
       setIsLoading(false);
     }
   };
 
   const registerUser = async () => {
-    if (!validateUsername(username) || !validatePassword(password)) {
-      alert('Please enter a valid username and password');
-      return;
-    }
-
-    setIsLoading(true);
     try {
-      const isUsernameAvailable = await checkUsernameAvailable(username.trim());
-      if (!isUsernameAvailable) {
-        alert('Username is already taken. Please choose another one.');
-        return;
-      }
+      setIsLoading(true);
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Create user document in Firestore
+      const db = getFirestore();
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
+        username,
+        email,
+        createdAt: serverTimestamp(),
+      });
 
-      const firebaseUser = await FirebaseService.signUp(email.trim(), password, username.trim());
-      if (firebaseUser) {
-        const app = getApp();
-        const db = getFirestore(app);
-
-        // Create UserModel-compatible Firestore document
-        const userData = {
-          uid: firebaseUser.uid,
-          email: email.trim().toLowerCase(),
-          username: username.trim(),
-          createdAt: serverTimestamp(),
-          profilePicture: '',
-          bio: '',
-          passions: [],
-          requests: [],
-          friends: [],
-          posts: [],
-        };
-
-        await setDoc(doc(db, 'users', firebaseUser.uid), userData);
-
-        const fetchedUserData = await FirebaseService.getUserData(firebaseUser.uid);
-        setUser(fetchedUserData);
-        navigation.replace(AppRoutes.home);
-      }
-    } catch (e) {
-      alert(`Registration failed: ${e.message}`);
+      navigation.replace(AppRoutes.mainTabs);
+    } catch (error) {
+      alert(error.message);
     } finally {
       setIsLoading(false);
     }

@@ -1,11 +1,11 @@
 import React from 'react';
-import { createStackNavigator } from '@react-navigation/stack';
 import SplashScreen from '../views/screens/SplashScreen';
 import OrientationSelectionScreen from '../views/screens/OrientationSelectionScreen';
 import CameraScreen from '../views/screens/CameraScreen';
 import PostVideoScreen from '../views/screens/PostVideoScreen';
 import SignInScreen from '../views/screens/SignInScreen';
-import HomeScreen from '../views/screens/HomeScreen';
+import { createStackNavigator } from '@react-navigation/stack';
+import TabNavigator from '../navigation/TabNavigator';
 
 const Stack = createStackNavigator();
 
@@ -38,8 +38,8 @@ const AppRoutes = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="Home"
-        component={HomeScreen}
+        name="MainTabs"
+        component={TabNavigator}
         options={{ headerShown: false }}
       />
     </Stack.Navigator>

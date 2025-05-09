@@ -4,7 +4,7 @@ const AppRoutes = {
     camera: 'Camera',
     postVideo: 'PostVideo',
     signIn: 'SignIn',
-    home: 'Home',
+    mainTabs: 'MainTabs',
   };
   
   export { AppRoutes };
