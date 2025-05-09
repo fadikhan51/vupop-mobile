@@ -3,9 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'rea
 import AppTheme from '../../utils/Theme';
 import useAuthController from '../../controllers/AuthController';
 import { AppRoutes } from '../../utils/Constants';
+import { useUser } from '../../contexts/UserContext';
 
 const HomeScreen = ({ navigation }) => {
   const { signOut, isLoading } = useAuthController(navigation);
+  const { user} = useUser();
+
+  console.log(user);
 
   const handleSignOut = async () => {
     try {

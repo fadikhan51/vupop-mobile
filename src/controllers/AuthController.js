@@ -18,9 +18,10 @@ import {
 import { getApp } from '@react-native-firebase/app';
 import FirebaseService from '../services/FirebaseService';
 import { AppRoutes } from '../utils/Constants';
+import { useUser } from '../contexts/UserContext';
 
 const useAuthController = (navigation) => {
-  const [user, setUser] = useState(null);
+  const { updateUser, clearUser, setIsLoading: setGlobalLoading } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isValidEmail, setIsValidEmail] = useState(false);
@@ -57,9 +58,9 @@ const useAuthController = (navigation) => {
     const unsubscribe = onAuthStateChanged(authInstance, async (firebaseUser) => {
       if (firebaseUser) {
         const userData = await FirebaseService.getUserData(firebaseUser.uid);
-        setUser(userData);
+        updateUser(userData);
       } else {
-        setUser(null);
+        clearUser();
       }
     });
 
@@ -133,42 +134,57 @@ const useAuthController = (navigation) => {
   const loginUser = async () => {
     try {
       setIsLoading(true);
+      setGlobalLoading(true);
       const auth = getAuth();
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const userData = await FirebaseService.getUserData(userCredential.user.uid);
+      updateUser(userData);
       navigation.replace(AppRoutes.mainTabs);
     } catch (error) {
       alert(error.message);
     } finally {
       setIsLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const registerUser = async () => {
     try {
       setIsLoading(true);
+      setGlobalLoading(true);
       const auth = getAuth();
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
       // Create user document in Firestore
       const db = getFirestore();
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
+      const userData = {
+        uid: userCredential.user.uid,
         username,
         email,
         createdAt: serverTimestamp(),
-      });
+        profilePicture: '',
+        bio: '',
+        passions: [],
+        requests: [],
+        friends: [],
+        posts: [],
+      };
 
+      await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+      updateUser(userData);
       navigation.replace(AppRoutes.mainTabs);
     } catch (error) {
       alert(error.message);
     } finally {
       setIsLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
       await FirebaseService.signOut();
-      setUser(null);
+      clearUser();
     } catch (e) {
       alert(`Failed to sign out: ${e.message}`);
     }
@@ -179,7 +195,6 @@ const useAuthController = (navigation) => {
   };
 
   return {
-    user,
     isLoading,
     isLoadingGoogle,
     isValidEmail,
