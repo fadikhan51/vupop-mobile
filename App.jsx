@@ -8,9 +8,9 @@ const App = () => {
   return (
     <NavigationContainer>
       <UserProvider>
-        <OrientationProvider>
-          <AppRoutes />
-        </OrientationProvider>
+      <OrientationProvider>
+      <AppRoutes />
+      </OrientationProvider>
       </UserProvider>
     </NavigationContainer>
   );
