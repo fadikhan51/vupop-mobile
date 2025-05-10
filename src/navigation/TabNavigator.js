@@ -7,6 +7,7 @@ import AddVideoScreen from '../views/screens/AddVideoScreen';
 import NotificationsScreen from '../views/screens/NotificationsScreen';
 import ProfileScreen from '../views/screens/ProfileScreen';
 import AppTheme from '../utils/Theme';
+import OrientationSelectionScreen from '../views/screens/OrientationSelectionScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -49,7 +50,7 @@ const TabNavigator = () => {
       />
       <Tab.Screen
         name="AddVideo"
-        component={AddVideoScreen}
+        component={OrientationSelectionScreen}
         options={{
           tabBarIcon: ({ color, size }) => (
             <Icon name="add-circle" size={size} color={color} />

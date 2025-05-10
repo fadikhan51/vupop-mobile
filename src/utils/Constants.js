@@ -7,6 +7,7 @@ const AppRoutes = {
     mainTabs: 'MainTabs',
     settings: 'Settings',
     editProfile: 'EditProfile',
+    home: "Home",
   };
   
   export { AppRoutes };

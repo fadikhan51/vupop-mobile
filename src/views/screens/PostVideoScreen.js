@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Video from 'react-native-video';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import ProgressBar from 'react-native-progress/Bar';
 import usePostVideoController from '../../controllers/PostVideoController';
 import AppTheme from '../../utils/Theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,6 +25,8 @@ const PostVideoScreen = ({ route, navigation }) => {
     hashtags,
     mentions,
     mentionSuggestions,
+    uploadProgress,
+    isLoading,
     addHashtag,
     removeHashtag,
     addMention,
@@ -40,7 +43,7 @@ const PostVideoScreen = ({ route, navigation }) => {
   const handleInputLayout = () => {
     if (mentionInputRef.current) {
       mentionInputRef.current.measure((x, y, width, height, pageX, pageY) => {
-        setDropdownTop(pageY + height + 4); // Position just below input with small gap
+        setDropdownTop(pageY + height + 4);
       });
     }
   };
@@ -64,12 +67,14 @@ const PostVideoScreen = ({ route, navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={cancel}>
+        <TouchableOpacity onPress={cancel} disabled={isLoading}>
           <Icon name="close" size={28} color={AppTheme.primaryYellow} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>New Post</Text>
-        <TouchableOpacity onPress={postVideo}>
-          <Text style={styles.shareButton}>Share</Text>
+        <TouchableOpacity onPress={postVideo} disabled={isLoading}>
+          <Text style={[styles.shareButton, isLoading && styles.disabledButton]}>
+            {isLoading ? 'Uploading...' : 'Share'}
+          </Text>
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
@@ -94,8 +99,22 @@ const PostVideoScreen = ({ route, navigation }) => {
             multiline
             value={description}
             onChangeText={setDescription}
+            editable={!isLoading}
           />
         </View>
+        {isLoading && (
+          <View style={styles.progressContainer}>
+            <ProgressBar
+              progress={uploadProgress / 100}
+              width={null}
+              height={8}
+              color={AppTheme.primaryYellow}
+              unfilledColor="rgba(255, 255, 255, 0.2)"
+              borderWidth={0}
+            />
+            <Text style={styles.progressText}>{Math.round(uploadProgress)}%</Text>
+          </View>
+        )}
         <Text style={styles.sectionTitle}>Hashtags</Text>
         <TextInput
           style={styles.input}
@@ -108,13 +127,14 @@ const PostVideoScreen = ({ route, navigation }) => {
               e.target.clear();
             }
           }}
+          editable={!isLoading}
         />
         {hashtags.length > 0 && (
           <View style={styles.chipContainer}>
             {hashtags.map((tag) => (
               <View key={tag} style={styles.chip}>
                 <Text style={styles.chipText}>{tag}</Text>
-                <TouchableOpacity onPress={() => removeHashtag(tag)}>
+                <TouchableOpacity onPress={() => removeHashtag(tag)} disabled={isLoading}>
                   <Icon name="close" size={16} color={AppTheme.primaryYellow} />
                 </TouchableOpacity>
               </View>
@@ -130,7 +150,7 @@ const PostVideoScreen = ({ route, navigation }) => {
             placeholder="Mention someone (e.g., @user1)"
             placeholderTextColor="gray"
             onChangeText={(value) => {
-              handleInputLayout(); // Recalculate position on text change
+              handleInputLayout();
               if (
                 value.endsWith('@') ||
                 (value.includes('@') && value.split(' ').pop().startsWith('@'))
@@ -150,6 +170,7 @@ const PostVideoScreen = ({ route, navigation }) => {
                 e.target.clear();
               }
             }}
+            editable={!isLoading}
           />
         </View>
         {mentions.length > 0 && (
@@ -157,7 +178,7 @@ const PostVideoScreen = ({ route, navigation }) => {
             {mentions.map((mention) => (
               <View key={mention} style={styles.chip}>
                 <Text style={styles.chipText}>{mention}</Text>
-                <TouchableOpacity onPress={() => removeMention(mention)}>
+                <TouchableOpacity onPress={() => removeMention(mention)} disabled={isLoading}>
                   <Icon name="close" size={16} color={AppTheme.primaryYellow} />
                 </TouchableOpacity>
               </View>
@@ -165,14 +186,12 @@ const PostVideoScreen = ({ route, navigation }) => {
           </View>
         )}
         <Text style={styles.sectionTitle}>Location</Text>
-        <TouchableOpacity style={styles.locationContainer}>
+        <TouchableOpacity style={styles.locationContainer} disabled={isLoading}>
           <Icon name="location-on" size={20} color={AppTheme.primaryYellow} />
-          <Text style={styles.locationText}>
-            {location || 'Add location'}
-          </Text>
+          <Text style={styles.locationText}>{location || 'Add location'}</Text>
         </TouchableOpacity>
       </ScrollView>
-      {mentionSuggestions.length > 0 && (
+      {mentionSuggestions.length > 0 && !isLoading && (
         <View style={[styles.suggestionListContainer, { top: dropdownTop }]}>
           <FlatList
             data={mentionSuggestions}
@@ -211,6 +230,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontFamily: 'Poppins',
   },
+  disabledButton: {
+    opacity: 0.5,
+  },
   content: {
     padding: 16,
   },
@@ -243,6 +265,16 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: 'Poppins',
     fontSize: 16,
+  },
+  progressContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  progressText: {
+    color: AppTheme.primaryYellow,
+    fontSize: 14,
+    fontFamily: 'Poppins',
+    marginTop: 4,
   },
   sectionTitle: {
     color: AppTheme.primaryYellow,
@@ -289,12 +321,12 @@ const styles = StyleSheet.create({
     right: 16,
     maxHeight: 200,
     backgroundColor: AppTheme.secondaryBlack,
-    borderRadius: 12, // Softer corners for minimalistic look
+    borderRadius: 12,
     zIndex: 1000,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2, // Subtle shadow for minimalism
+    shadowOpacity: 0.2,
     shadowRadius: 4,
   },
   suggestionList: {
@@ -306,11 +338,11 @@ const styles = StyleSheet.create({
   suggestionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10, // Slightly larger padding for cleaner look
+    padding: 10,
     paddingHorizontal: 12,
   },
   suggestionImage: {
-    width: 36, // Slightly smaller for minimalism
+    width: 36,
     height: 36,
     borderRadius: 18,
   },

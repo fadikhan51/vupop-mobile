@@ -11,17 +11,20 @@ import {
 } from 'react-native';
 import Icon from '@react-native-vector-icons/ionicons';
 import AppTheme from '../../utils/Theme';
-import { useUser } from '../../contexts/UserContext';
+import useUserMediaController from '../../controllers/UserMediaController';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 const THUMBNAIL_SIZE = (width - 4) / 3;
 
 const ProfileScreen = ({ navigation }) => {
-  const { user } = useUser();
+  const { user, videos, isLoading } = useUserMediaController();
 
   const renderReelThumbnail = ({ item }) => (
-    <TouchableOpacity style={styles.thumbnailContainer}>
+    <TouchableOpacity
+      style={styles.thumbnailContainer}
+      onPress={() => navigation.navigate('Reel', { video: item })}
+    >
       <Image
         source={{ uri: item.thumbnailUrl }}
         style={styles.thumbnail}
@@ -81,13 +84,19 @@ const ProfileScreen = ({ navigation }) => {
 
         <View style={styles.reelsSection}>
           <Text style={styles.sectionTitle}>My Reels</Text>
-          <FlatList
-            data={user?.posts || []}
-            renderItem={renderReelThumbnail}
-            keyExtractor={(item) => item.id}
-            numColumns={3}
-            scrollEnabled={false}
-          />
+          {isLoading ? (
+            <Text style={styles.loadingText}>Loading reels...</Text>
+          ) : videos.length === 0 ? (
+            <Text style={styles.noReelsText}>No reels yet</Text>
+          ) : (
+            <FlatList
+              data={videos}
+              renderItem={renderReelThumbnail}
+              keyExtractor={(item) => item.id}
+              numColumns={3}
+              scrollEnabled={false}
+            />
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -207,6 +216,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins',
     marginTop: 4,
   },
+  loadingText: {
+    color: AppTheme.primaryYellow,
+    fontSize: 16,
+    fontFamily: 'Poppins',
+    textAlign: 'center',
+  },
+  noReelsText: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 16,
+    fontFamily: 'Poppins',
+    textAlign: 'center',
+  },
 });
 
-export default ProfileScreen; 
+export default ProfileScreen;

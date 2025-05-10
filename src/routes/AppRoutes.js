@@ -7,8 +7,9 @@ import SignInScreen from '../views/screens/SignInScreen';
 import SettingsScreen from '../views/screens/SettingsScreen';
 import EditProfileScreen from '../views/screens/EditProfileScreen';
 import ProfilePictureCameraScreen from '../views/screens/ProfilePictureCameraScreen';
-import { createStackNavigator } from '@react-navigation/stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import TabNavigator from '../navigation/TabNavigator';
+import ReelScreen from '../views/screens/ReelScreen';
 
 const Stack = createStackNavigator();
 
@@ -18,47 +19,52 @@ const AppRoutes = () => {
       <Stack.Screen
         name="Splash"
         component={SplashScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="OrientationSelection"
         component={OrientationSelectionScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="Camera"
         component={CameraScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="PostVideo"
         component={PostVideoScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="SignIn"
         component={SignInScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="MainTabs"
         component={TabNavigator}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="EditProfile"
         component={EditProfileScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Stack.Screen
         name="ProfilePictureCamera"
         component={ProfilePictureCameraScreen}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
+      />
+      <Stack.Screen
+        name="Reel"
+        component={ReelScreen}
+        options={{headerShown: false}}
       />
     </Stack.Navigator>
   );
