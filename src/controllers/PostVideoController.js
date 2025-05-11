@@ -115,6 +115,102 @@ const usePostVideoController = (route, navigation) => {
     setMentionSuggestions([]);
   };
 
+  const moderateVideo = async (videoUrl) => {
+    const sightengineUrl = 'https://api.sightengine.com/1.0/video/check-sync.json';
+    const params = new URLSearchParams({
+      stream_url: videoUrl,
+      models: 'nudity-2.1,weapon,recreational_drug,gore-2.0,gambling,self-harm,violence',
+      api_user: '316813339',
+      api_secret: 'm2iyVQBWDQcK8ChMZ7g2aa7KmkiLqVrZ',
+    });
+
+    try {
+      const response = await fetch(`${sightengineUrl}?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Sightengine API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Sightengine moderation response:', JSON.stringify(data, null, 2));
+
+      // Moderation logic: Check each frame for violations
+      const threshold = 0.5; // Flag if probability > 0.5
+      let violations = [];
+
+      for (const frame of data.data.frames) {
+        const { nudity, weapon, recreational_drug, gore, gambling, 'self-harm': selfHarm, violence } = frame;
+
+        // Nudity check
+        if (
+          nudity.sexual_activity > threshold ||
+          nudity.sexual_display > threshold ||
+          nudity.erotica > threshold ||
+          nudity.very_suggestive > threshold ||
+          nudity.suggestive > threshold
+        ) {
+          violations.push(`Nudity violation at frame ${frame.info.position}`);
+        }
+
+        // Weapon check
+        if (
+          weapon.classes.firearm > threshold ||
+          weapon.classes.firearm_gesture > threshold ||
+          weapon.classes.firearm_toy > threshold ||
+          weapon.classes.knife > threshold
+        ) {
+          violations.push(`Weapon violation at frame ${frame.info.position}`);
+        }
+
+        // Recreational drug check
+        if (recreational_drug.prob > threshold) {
+          violations.push(`Recreational drug violation at frame ${frame.info.position}`);
+        }
+
+        // Gore check
+        if (
+          gore.prob > threshold ||
+          Object.values(gore.classes).some(prob => prob > threshold)
+        ) {
+          violations.push(`Gore violation at frame ${frame.info.position}`);
+        }
+
+        // Gambling check
+        if (gambling.prob > threshold) {
+          violations.push(`Gambling violation at frame ${frame.info.position}`);
+        }
+
+        // Self-harm check
+        if (selfHarm.prob > threshold) {
+          violations.push(`Self-harm violation at frame ${frame.info.position}`);
+        }
+
+        // Violence check
+        if (
+          violence.prob > threshold ||
+          Object.values(violence.classes).some(prob => prob > threshold)
+        ) {
+          violations.push(`Violence violation at frame ${frame.info.position}`);
+        }
+      }
+
+      if (violations.length > 0) {
+        console.log('Moderation violations:', violations);
+        return { passed: false, violations };
+      }
+
+      return { passed: true, moderationResult: data };
+    } catch (error) {
+      console.error('Sightengine moderation error:', error);
+      throw new Error(`Failed to moderate video: ${error.message}`);
+    }
+  };
+
   const postVideo = async () => {
     const auth = getAuth();
     const currentUser = auth.currentUser;
@@ -133,7 +229,6 @@ const usePostVideoController = (route, navigation) => {
       return;
     }
 
-
     setIsLoading(true);
     setUploadProgress(0);
 
@@ -141,7 +236,7 @@ const usePostVideoController = (route, navigation) => {
       // Upload video to Cloudinary
       const formData = new FormData();
       formData.append('file', {
-        uri: `file://${videoPath}`,
+        uri: Platform.OS === 'android' ? videoPath : `file://${videoPath}`,
         type: 'video/mp4',
         name: `${currentUser.uid}_video.mp4`,
       });
@@ -155,7 +250,7 @@ const usePostVideoController = (route, navigation) => {
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) {
           const progress = ((event.loaded/2) / event.total) * 100;
-          console.log("Data uploaded is ", event.loaded/2, " and total data is ", event.total);
+          console.log('Upload progress:', { loaded: event.loaded, total: event.total });
           setUploadProgress(progress);
         }
       };
@@ -170,34 +265,48 @@ const usePostVideoController = (route, navigation) => {
           }
 
           const videoUrl = data.secure_url;
-          const db = getFirestore();
-          const videoId = `${currentUser.uid}_${Date.now()}`;
 
-          // Create video document with location
-          await setDoc(doc(db, 'videos', videoId), {
-            url: videoUrl,
-            likes: 0,
-            comments: 0,
-            caption: description,
-            hashtags: hashtags,
-            mentions: mentions,
-            location: location || 'Unknown Location',
-            moderation_report: {},
-            userId: currentUser.uid,
-            createdAt: new Date(),
-          });
+          // Moderate video with Sightengine
+          try {
+            const moderation = await moderateVideo(videoUrl);
+            if (!moderation.passed) {
+              alert(
+                'Video rejected due to inappropriate content:\n' +
+                moderation.violations.join('\n')
+              );
+              setIsLoading(false);
+              return;
+            }
 
-          // Update user's posts array
-          const userRef = doc(db, 'users', currentUser.uid);
-          await updateDoc(userRef, {
-            posts: arrayUnion(videoId),
-          });
+            // Save to Firebase with moderation result
+            const db = getFirestore();
+            const videoId = `${currentUser.uid}_${Date.now()}`;
 
-          console.log('Video posted successfully, navigating to Home');
-          setIsLoading(false);
-          navigation.navigate('MainTabs', {
-            screen: 'Home'
-          });
+            await setDoc(doc(db, 'videos', videoId), {
+              url: videoUrl,
+              likes: 0,
+              comments: 0,
+              caption: description,
+              hashtags: hashtags,
+              mentions: mentions,
+              location: location || 'Unknown Location',
+              moderation_report: moderation.moderationResult,
+              userId: currentUser.uid,
+              createdAt: new Date(),
+            });
+
+            const userRef = doc(db, 'users', currentUser.uid);
+            await updateDoc(userRef, {
+              posts: arrayUnion(videoId),
+            });
+
+            console.log('Video posted successfully, navigating to Home');
+            setIsLoading(false);
+            navigation.navigate('MainTabs', { screen: 'Home' });
+          } catch (error) {
+            alert(error.message);
+            setIsLoading(false);
+          }
         } else {
           alert(`Upload failed: ${xhr.statusText}`);
           setIsLoading(false);

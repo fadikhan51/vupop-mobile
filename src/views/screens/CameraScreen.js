@@ -22,6 +22,7 @@ const CameraScreen = ({ navigation }) => {
     toggleAudio,
     toggleFlash,
     setZoom,
+    pickVideoFromGallery,
   } = useCameraController(navigation);
 
   const isLandscapeForIcons = orientation === 'landscape';
@@ -37,102 +38,109 @@ const CameraScreen = ({ navigation }) => {
 
   return (
     <>
-    {console.log(orientation)}
-    <View style={styles.container}>
-      <Camera
-        ref={cameraRef}
-        style={StyleSheet.absoluteFill}
-        device={Camera.getAvailableCameraDevices().find(d => d.position === (isFrontCamera ? 'front' : 'back'))}
-        isActive={true}
-        video={true}
-        audio={isAudioEnabled}
-        torch={isFlashEnabled ? 'on' : 'off'}
-        zoom={currentZoom}
-        orientation={orientation}
-      />
-      <View style={styles.overlay}>
-        <LinearGradient
-          colors={[AppTheme.primaryBlack + 'CC', AppTheme.primaryBlack + '00']}
-          style={styles.topBar}
-        >
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon
-              name="chevron-back-circle"
-              size={32}
-              color={AppTheme.primaryYellow}
-              style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
-            />
-          </TouchableOpacity>
-          <View style={styles.topBarRight}>
-            {!isFrontCamera && (
-              <TouchableOpacity onPress={toggleFlash} style={styles.iconSpacing}>
-                <Icon
-                  name={isFlashEnabled ? 'flash' : 'flash-off'}
-                  size={32}
-                  color={AppTheme.primaryYellow}
-                  style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
-                />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity onPress={toggleCamera}>
+      {console.log(orientation)}
+      <View style={styles.container}>
+        <Camera
+          ref={cameraRef}
+          style={StyleSheet.absoluteFill}
+          device={Camera.getAvailableCameraDevices().find(d => d.position === (isFrontCamera ? 'front' : 'back'))}
+          isActive={true}
+          video={true}
+          audio={isAudioEnabled}
+          torch={isFlashEnabled ? 'on' : 'off'}
+          zoom={currentZoom}
+          orientation={orientation}
+        />
+        <View style={styles.overlay}>
+          <LinearGradient
+            colors={[AppTheme.primaryBlack + 'CC', AppTheme.primaryBlack + '00']}
+            style={styles.topBar}
+          >
+            <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon
-                name="camera-reverse"
+                name="chevron-back-circle"
                 size={32}
                 color={AppTheme.primaryYellow}
                 style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
               />
             </TouchableOpacity>
-          </View>
-        </LinearGradient>
-        <View style={styles.rightControls}>
+            <View style={styles.topBarRight}>
+              {!isFrontCamera && (
+                <TouchableOpacity onPress={toggleFlash} style={styles.iconSpacing}>
+                  <Icon
+                    name={isFlashEnabled ? 'flash' : 'flash-off'}
+                    size={32}
+                    color={AppTheme.primaryYellow}
+                    style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
+                  />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity onPress={toggleCamera}>
+                <Icon
+                  name="camera-reverse"
+                  size={32}
+                  color={AppTheme.primaryYellow}
+                  style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
+                />
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+          <View style={styles.rightControls}>
             <>
-            {console.log("The value for is landscape is ", isLandscapeForIcons)}
-          <Slider
-            style={{width:200, transform: [{ rotate:'-90deg' }] }}
-            minimumValue={1}
-            maximumValue={5}
-            value={currentZoom}
-            onValueChange={setZoom}
-            minimumTrackTintColor={AppTheme.primaryYellow}
-            maximumTrackTintColor={AppTheme.primaryYellow + '4D'}
-            thumbTintColor={AppTheme.primaryYellow}
-          />
-          </>
-        </View>
-        <LinearGradient
-          colors={[AppTheme.primaryBlack + '00', AppTheme.primaryBlack + 'CC']}
-          style={styles.bottomControls}
-        >
-          <TouchableOpacity onPress={toggleAudio}>
-            <Icon
-              name={isAudioEnabled ? 'volume-high' : 'volume-mute'}
-              size={34}
-              color={AppTheme.primaryYellow}
-              style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={toggleRecording}>
-            <View
-              style={[
-                styles.recordButton,
-                {
-                  backgroundColor: isRecording ? AppTheme.primaryYellow : 'transparent',
-                  transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }],
-                },
-              ]}
-            >
+              {console.log("The value for is landscape is ", isLandscapeForIcons)}
+              <Slider
+                style={{ width: 200, transform: [{ rotate: '-90deg' }] }}
+                minimumValue={1}
+                maximumValue={5}
+                value={currentZoom}
+                onValueChange={setZoom}
+                minimumTrackTintColor={AppTheme.primaryYellow}
+                maximumTrackTintColor={AppTheme.primaryYellow + '4D'}
+                thumbTintColor={AppTheme.primaryYellow}
+              />
+            </>
+          </View>
+          <LinearGradient
+            colors={[AppTheme.primaryBlack + '00', AppTheme.primaryBlack + 'CC']}
+            style={styles.bottomControls}
+          >
+            <TouchableOpacity onPress={toggleAudio}>
+              <Icon
+                name={isAudioEnabled ? 'volume-high' : 'volume-mute'}
+                size={34}
+                color={AppTheme.primaryYellow}
+                style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={toggleRecording}>
               <View
                 style={[
-                  styles.innerCircle,
-                  { backgroundColor: isRecording ? AppTheme.primaryBlack : AppTheme.primaryYellow },
+                  styles.recordButton,
+                  {
+                    backgroundColor: isRecording ? AppTheme.primaryYellow : 'transparent',
+                    transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }],
+                  },
                 ]}
+              >
+                <View
+                  style={[
+                    styles.innerCircle,
+                    { backgroundColor: isRecording ? AppTheme.primaryBlack : AppTheme.primaryYellow },
+                  ]}
+                />
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={pickVideoFromGallery}>
+              <Icon
+                name="image"
+                size={34}
+                color={AppTheme.primaryYellow}
+                style={{ transform: [{ rotate: isLandscapeForIcons ? '90deg' : '0deg' }] }}
               />
-            </View>
-          </TouchableOpacity>
-          <View style={{ width: 34 }} />
-        </LinearGradient>
+            </TouchableOpacity>
+          </LinearGradient>
+        </View>
       </View>
-    </View>
     </>
   );
 };
